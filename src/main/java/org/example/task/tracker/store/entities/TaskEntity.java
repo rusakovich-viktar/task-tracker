@@ -32,7 +32,7 @@ public class TaskEntity {
     String name;
 
     @Builder.Default
-    Instant createAt = Instant.now();
+    Instant createdAt = Instant.now();
 
     String description;
 

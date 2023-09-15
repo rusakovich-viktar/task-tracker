@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
@@ -37,10 +38,14 @@ public class ProjectEntity {
     String name;
 
     @Builder.Default
-    Instant createAt = Instant.now();
+    Instant createdAt = Instant.now();
+
+    @Builder.Default
+    Instant updatedAt = Instant.now();
 
     @Builder.Default
     @OneToMany
+    @JoinColumn(name="project_id", referencedColumnName = "id")
     List<TaskStateEntity> taskStates = new ArrayList<>();
 
 }
