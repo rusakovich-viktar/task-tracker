@@ -25,6 +25,18 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Класс ProjectController представляет собой контроллер Spring MVC, который обрабатывает HTTP-запросы,
+ * связанные с операциями CRUD (создание, чтение, обновление и удаление) для проектов в приложении.
+ * Этот контроллер предоставляет API для управления проектами и взаимодействует с базой данных для
+ * выполнения операций с проектами.
+ *
+ * @see org.springframework.web.bind.annotation.RestController
+ * @see org.example.task.tracker.store.repositories.ProjectRepository
+ * @see org.example.task.tracker.api.dto.ProjectDto
+ * @see org.example.task.tracker.exceptions.BadRequestExceptions
+ * @see org.example.task.tracker.exceptions.NotFoundExceptions
+ */
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Transactional
@@ -41,6 +53,12 @@ public class ProjectController {
     public static final String CREATE_PROJECT = "/api/projects";
     public static final String EDIT_PROJECT = "/api/projects/{project_Id}";
 
+    /**
+     * Метод для получения списка проектов с возможностью фильтрации по префиксу имени.
+     *
+     * @param optionalPrefixName Необязательный параметр для фильтрации по префиксу имени.
+     * @return Список проектов в формате ProjectDto.
+     */
     @GetMapping(FETCH_PROJECT)
     public List<ProjectDto> fetchProjects(
             @RequestParam(value = "prefix_name", required = false) Optional<String> optionalPrefixName) {
@@ -57,6 +75,13 @@ public class ProjectController {
 
     }
 
+    /**
+     * Метод для создания нового проекта.
+     *
+     * @param projectName Имя нового проекта.
+     * @return Созданный проект в формате ProjectDto.
+     * @throws BadRequestExceptions если имя проекта пустое или проект с таким именем уже существует.
+     */
     @PostMapping(CREATE_PROJECT)
     public ProjectDto createProject(@RequestParam("project_name") String projectName) {
 
@@ -80,6 +105,15 @@ public class ProjectController {
 
     }
 
+    /**
+     * Метод для создания или обновления проекта.
+     *
+     * @param optionalProjectId   Необязательный параметр для идентификации проекта.
+     * @param optionalProjectName Необязательный параметр для нового имени проекта.
+     * @return Созданный или обновленный проект в формате ProjectDto.
+     * @throws BadRequestExceptions если имя проекта пустое или имя уже занято при создании, или если проект
+     *                              с указанным идентификатором не найден при обновлении.
+     */
     @PutMapping(CREATE_OR_UPDATE_PROJECT)
     public ProjectDto createOrUpdateProject(
             @RequestParam(value = "project_id", required = false) Optional<Long> optionalProjectId,
@@ -116,7 +150,15 @@ public class ProjectController {
         return projectDtoFactory.makeProjectDto(savedProject);
     }
 
-
+    /**
+     * Метод для редактирования имени проекта.
+     *
+     * @param projectId   Идентификатор проекта, который нужно отредактировать.
+     * @param projectName Новое имя проекта.
+     * @return Отредактированный проект в формате ProjectDto.
+     * @throws BadRequestExceptions если имя проекта пустое или имя уже занято другим проектом.
+     * @throws NotFoundExceptions   если проект с указанным идентификатором не найден.
+     */
     @PatchMapping(EDIT_PROJECT)
     public ProjectDto editProject(
             @PathVariable("project_Id") Long projectId,
@@ -159,6 +201,13 @@ public class ProjectController {
                 );
     }
 
+    /**
+     * Метод для удаления проекта по идентификатору.
+     *
+     * @param projectId Идентификатор проекта, который нужно удалить.
+     * @return Объект AskDto с информацией о результате удаления.
+     * @throws NotFoundExceptions если проект с указанным идентификатором не найден.
+     */
     @DeleteMapping(DELETE_PROJECT)
     public AskDto deleteProject(@PathVariable("project_Id") Long projectId) {
 
