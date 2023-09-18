@@ -18,7 +18,9 @@ import org.example.task.tracker.store.repositories.ProjectRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,10 +36,10 @@ public class ProjectController {
     ProjectDtoFactory projectDtoFactory;
 
     public static final String FETCH_PROJECT = "/api/projects";
-//    public static final String CREATE_PROJECT = "/api/projects";
     public static final String CREATE_OR_UPDATE_PROJECT = "/api/projects";
-//    public static final String EDIT_PROJECT = "/api/projects/{project_Id}";
     public static final String DELETE_PROJECT = "/api/projects/{project_Id}";
+    public static final String CREATE_PROJECT = "/api/projects";
+    public static final String EDIT_PROJECT = "/api/projects/{project_Id}";
 
     @GetMapping(FETCH_PROJECT)
     public List<ProjectDto> fetchProjects(
@@ -47,7 +49,7 @@ public class ProjectController {
 
         Stream<ProjectEntity> projectStream = optionalPrefixName
                 .map(projectRepository::streamAllByNameStartsWithIgnoreCase)
-                .orElseGet(projectRepository::streamAll);
+                .orElseGet(projectRepository::streamAllBy);
 
         return projectStream
                 .map(projectDtoFactory::makeProjectDto)
@@ -55,28 +57,28 @@ public class ProjectController {
 
     }
 
-//    @PostMapping(CREATE_PROJECT)
-//    public ProjectDto createProject(@RequestParam("project_name") String projectName) {
-//
-//        if (projectName.trim().isEmpty()) {
-//            throw new BadRequestExceptions("Name can't be empty");
-//        }
-//
-//        projectRepository
-//                .findByName(projectName)
-//                .ifPresent(project -> {
-//                    throw new BadRequestExceptions(String.format("Project \"%s\" alredy exists.", projectName));
-//                });
-//
-//        ProjectEntity project = projectRepository.saveAndFlush(
-//                ProjectEntity.builder()
-//                        .name(projectName)
-//                        .build()
-//        );
-//
-//        return projectDtoFactory.makeProjectDto(project);
-//
-//    }
+    @PostMapping(CREATE_PROJECT)
+    public ProjectDto createProject(@RequestParam("project_name") String projectName) {
+
+        if (projectName.trim().isEmpty()) {
+            throw new BadRequestExceptions("Name can't be empty");
+        }
+
+        projectRepository
+                .findByName(projectName)
+                .ifPresent(project -> {
+                    throw new BadRequestExceptions(String.format("Project \"%s\" alredy exists.", projectName));
+                });
+
+        ProjectEntity project = projectRepository.saveAndFlush(
+                ProjectEntity.builder()
+                        .name(projectName)
+                        .build()
+        );
+
+        return projectDtoFactory.makeProjectDto(project);
+
+    }
 
     @PutMapping(CREATE_OR_UPDATE_PROJECT)
     public ProjectDto createOrUpdateProject(
@@ -87,9 +89,9 @@ public class ProjectController {
 
         optionalProjectName = optionalProjectName.filter(projectName -> !projectName.trim().isEmpty());
 
-        boolean isCreate = !optionalProjectId.isPresent();
+        boolean isCreate = optionalProjectId.isEmpty();
 
-        if (isCreate && !optionalProjectName.isPresent()) {
+        if (isCreate && optionalProjectName.isEmpty()) {
             throw new BadRequestExceptions("Project name can't be empty.");
         }
 
@@ -115,33 +117,33 @@ public class ProjectController {
     }
 
 
-//    @PatchMapping(EDIT_PROJECT)
-//    public ProjectDto editProject(
-//            @PathVariable("project_Id") Long projectId,
-//            @RequestParam("project_name") String projectName
-//    ) {
-//
-//        if (projectName.trim().isEmpty()) {
-//            throw new BadRequestExceptions("Name can't be empty");
-//        }
-//
-//        ProjectEntity project = getProjectOrThrowException(projectId);
-//
-//        projectRepository
-//                .findByName(projectName)
-//                .filter(anotherProject -> !Objects.equals(anotherProject.getId(), projectId))
-//                .ifPresent(anotherProject -> {
-//                    throw new BadRequestExceptions(String.format("Project \"%s\" alredy exists.", projectName));
-//                });
-//
-//        project.setName(projectName);
-//
-//
-//        project = projectRepository.saveAndFlush(project);
-//
-//        return projectDtoFactory.makeProjectDto(project);
-//
-//    }
+    @PatchMapping(EDIT_PROJECT)
+    public ProjectDto editProject(
+            @PathVariable("project_Id") Long projectId,
+            @RequestParam("project_name") String projectName
+    ) {
+
+        if (projectName.trim().isEmpty()) {
+            throw new BadRequestExceptions("Name can't be empty");
+        }
+
+        ProjectEntity project = getProjectOrThrowException(projectId);
+
+        projectRepository
+                .findByName(projectName)
+                .filter(anotherProject -> !Objects.equals(anotherProject.getId(), projectId))
+                .ifPresent(anotherProject -> {
+                    throw new BadRequestExceptions(String.format("Project \"%s\" alredy exists.", projectName));
+                });
+
+        project.setName(projectName);
+
+
+        project = projectRepository.saveAndFlush(project);
+
+        return projectDtoFactory.makeProjectDto(project);
+
+    }
 
     private ProjectEntity getProjectOrThrowException(Long projectId) {
         return projectRepository
