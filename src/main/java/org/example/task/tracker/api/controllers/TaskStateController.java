@@ -1,6 +1,7 @@
 package org.example.task.tracker.api.controllers;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,8 @@ public class TaskStateController {
 
     public static final String GET_TASK_STATES = "/api/projects/{project_id}/tasks-states";
     public static final String CREATE_TASK_STATE = "/api/projects/{project_id}/task-states";
-    public static final String DELETE_PROJECT = "/api/projects/{project_Id}";
+
+    public static final String UPDATE_TASK_STATE = "/api/task-states/{task_state_Id}";
 
     @GetMapping(GET_TASK_STATES)
     public List<TaskStateDto> getTaskStates(@PathVariable(name = "project_id") Long projectId) {
@@ -57,26 +59,43 @@ public class TaskStateController {
 
         ProjectEntity project = controllerHelper.getProjectOrThrowException(projectId);
 
-        //Проверяем чтобы не было такого же названия в рамках проекта
-        project
-                .getTaskStates()
-                .stream()
-                .map(TaskStateEntity::getName)
-                .filter(anotherTaskStateName -> anotherTaskStateName.equalsIgnoreCase(taskStateName))
-                .findAny()
-                .ifPresent(it -> {
-                    throw new BadRequestExceptions(String.format("Task state name \"%s\" already exist.", taskStateName));
-                });
+        Optional<TaskStateEntity> optionalAnotherTaskState = Optional.empty();
+
+        for (TaskStateEntity taskState : project.getTaskStates()) {
+
+            if (taskState.getName().equalsIgnoreCase(taskStateName)) {
+                throw new BadRequestExceptions(String.format("Task state name \"%s\" already exist.", taskStateName));
+
+            }
+
+            if (taskState.getRightTaskState().isEmpty()) {
+                optionalAnotherTaskState = Optional.of(taskState);
+                break;
+            }
+
+        }
 
         TaskStateEntity taskState = taskStateRepository.saveAndFlush(
                 TaskStateEntity
                         .builder()
                         .name(taskStateName)
+                        .project(project)
                         .build()
         );
 
-        return new TaskStateDto();
-    }
+        optionalAnotherTaskState
+                .ifPresent(anotherTaskState -> {
 
+                    taskState.setLeftTaskState(anotherTaskState);
+
+                    anotherTaskState.setRightTaskState(taskState);
+
+                    taskStateRepository.saveAndFlush(anotherTaskState);
+                });
+
+        final TaskStateEntity savedTaskState = taskStateRepository.saveAndFlush(taskState);
+
+        return taskStateDtoFactory.makeTaskStateDto(savedTaskState);
+    }
 
 }
