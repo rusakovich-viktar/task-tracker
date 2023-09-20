@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.example.task.tracker.api.controllers.helpers.ControllerHelper;
 import org.example.task.tracker.api.dto.AskDto;
 import org.example.task.tracker.api.dto.ProjectDto;
 import org.example.task.tracker.api.factories.ProjectDtoFactory;
@@ -46,6 +47,8 @@ public class ProjectController {
     ProjectRepository projectRepository;
 
     ProjectDtoFactory projectDtoFactory;
+
+    ControllerHelper controllerHelper;
 
     public static final String FETCH_PROJECT = "/api/projects";
     public static final String CREATE_OR_UPDATE_PROJECT = "/api/projects";
@@ -130,7 +133,7 @@ public class ProjectController {
         }
 
         final ProjectEntity project = optionalProjectId
-                .map(this::getProjectOrThrowException)
+                .map(controllerHelper::getProjectOrThrowException)
                 .orElseGet(() -> ProjectEntity.builder().build());
 
         optionalProjectName
@@ -169,7 +172,7 @@ public class ProjectController {
             throw new BadRequestExceptions("Name can't be empty");
         }
 
-        ProjectEntity project = getProjectOrThrowException(projectId);
+        ProjectEntity project = controllerHelper.getProjectOrThrowException(projectId);
 
         projectRepository
                 .findByName(projectName)
@@ -187,19 +190,6 @@ public class ProjectController {
 
     }
 
-    private ProjectEntity getProjectOrThrowException(Long projectId) {
-        return projectRepository
-                .findById(projectId)
-                .orElseThrow(() ->
-                        new NotFoundExceptions
-                                (String.format(
-                                        "Project with id \"%s\" doesn't exists.",
-                                        projectId
-                                )
-
-                                )
-                );
-    }
 
     /**
      * Метод для удаления проекта по идентификатору.
@@ -211,7 +201,7 @@ public class ProjectController {
     @DeleteMapping(DELETE_PROJECT)
     public AskDto deleteProject(@PathVariable("project_Id") Long projectId) {
 
-        getProjectOrThrowException(projectId);
+        controllerHelper.getProjectOrThrowException(projectId);
 
         projectRepository.deleteById(projectId);
 
