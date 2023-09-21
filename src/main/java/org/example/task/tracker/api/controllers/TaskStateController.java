@@ -10,11 +10,13 @@ import org.example.task.tracker.api.controllers.helpers.ControllerHelper;
 import org.example.task.tracker.api.dto.TaskStateDto;
 import org.example.task.tracker.api.factories.TaskStateDtoFactory;
 import org.example.task.tracker.exceptions.BadRequestExceptions;
+import org.example.task.tracker.exceptions.NotFoundExceptions;
 import org.example.task.tracker.store.entities.ProjectEntity;
 import org.example.task.tracker.store.entities.TaskStateEntity;
 import org.example.task.tracker.store.repositories.TaskStateRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -96,6 +98,45 @@ public class TaskStateController {
         final TaskStateEntity savedTaskState = taskStateRepository.saveAndFlush(taskState);
 
         return taskStateDtoFactory.makeTaskStateDto(savedTaskState);
+    }
+
+    @PatchMapping(UPDATE_TASK_STATE)
+    public TaskStateDto updateTaskState(
+            @PathVariable(name = "task_state_Id") Long taskStateId,
+            @RequestParam(name = "task_state_name") String taskStateName) {
+
+        if (taskStateName.isBlank()) {
+            throw new BadRequestExceptions("Task state name can't be empty.");
+        }
+
+        TaskStateEntity taskState = getTaskStateOrThrowException(taskStateId);
+
+        taskStateRepository
+                .findTaskStateEntityByProjectIdAndNameContainsIgnoreCase(
+                        taskState.getProject().getId(), taskStateName
+                )
+                .filter(anotherTaskState -> !anotherTaskState.getId().equals(taskStateId))
+                .ifPresent(anotherTaskState -> {
+                    throw new BadRequestExceptions(String.format("Task state \"%s\" already exist.", taskStateName));
+                });
+
+        taskState.setName(taskStateName);
+
+        taskState = taskStateRepository.saveAndFlush(taskState);
+
+        return taskStateDtoFactory.makeTaskStateDto(taskState);
+    }
+
+    private TaskStateEntity getTaskStateOrThrowException(Long taskSTateId) {
+        return taskStateRepository
+                .findById(taskSTateId)
+                .orElseThrow(() ->
+                        new NotFoundExceptions(String.format(
+                                "Task state with \"%s\" id doesn't exist.",
+                                taskSTateId
+                        )
+                        )
+                );
     }
 
 }
