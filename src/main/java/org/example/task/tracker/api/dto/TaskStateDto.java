@@ -2,6 +2,7 @@ package org.example.task.tracker.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,11 +24,17 @@ public class TaskStateDto {
     @NonNull
     String name;
 
-    @NonNull
-    Long ordinal;
+    @JsonProperty("left_task_state_id")
+    Long leftTaskStateId;
+
+    @JsonProperty("right_task_state_id")
+    Long rightTaskStateId;
 
     @NonNull
     @JsonProperty("created_at")
     Instant createdAt;
+
+    @NonNull
+    List<TaskDto> tasks;
 
 }
