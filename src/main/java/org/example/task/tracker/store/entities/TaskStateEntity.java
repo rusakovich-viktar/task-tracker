@@ -13,46 +13,43 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "task_state")
 public class TaskStateEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    Long id;
+    private Long id;
 
-    String name;
-
-    @OneToOne
-    TaskStateEntity leftTaskState;
+    private String name;
 
     @OneToOne
-    TaskStateEntity rightTaskState;
+    private TaskStateEntity leftTaskState;
+
+    @OneToOne
+    private TaskStateEntity rightTaskState;
 
     @Builder.Default
-    Instant createdAt = Instant.now();
+    private Instant createdAt = Instant.now();
 
     @ManyToOne
-    ProjectEntity project;
+    private ProjectEntity project;
 
     @Builder.Default
     @OneToMany
     @JoinColumn(name = "task_state_id", referencedColumnName = "id")
-    List<TaskEntity> tasks = new ArrayList<>();
+    private List<TaskEntity> tasks = new ArrayList<>();
 
     public Optional<TaskStateEntity> getLeftTaskState() {
         return Optional.ofNullable(leftTaskState);
