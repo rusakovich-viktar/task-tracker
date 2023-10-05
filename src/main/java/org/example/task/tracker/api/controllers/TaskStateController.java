@@ -122,6 +122,7 @@ public class TaskStateController {
 
         taskState.setName(taskStateName);
 
+
         taskState = taskStateRepository.saveAndFlush(taskState);
 
         return taskStateDtoFactory.makeTaskStateDto(taskState);
